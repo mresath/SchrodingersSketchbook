@@ -18,6 +18,9 @@ add_subdirectory(vendor/imgui-sfml)
 
 add_executable(${PROJECT_NAME} 
     src/main.cpp
+    src/core/App.cpp
+    src/quantum/Simulation.cpp
+    src/render/Renderer.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE src)

@@ -4,31 +4,72 @@
 
 #include <SFML/Graphics.hpp>
 
+#include <algorithm>
+
+inline sf::FloatRect calculateLetterboxViewport(const sf::Vector2u &windowSize, const sf::Vector2f &viewSize)
+{
+    const float windowAspect = static_cast<float>(windowSize.x) / static_cast<float>(windowSize.y);
+    const float viewAspect = viewSize.x / viewSize.y;
+
+    float viewportWidth = 1.0f;
+    float viewportHeight = 1.0f;
+    float viewportLeft = 0.0f;
+    float viewportTop = 0.0f;
+
+    if (windowAspect > viewAspect)
+    {
+        viewportWidth = viewAspect / windowAspect;
+        viewportLeft = (1.0f - viewportWidth) * 0.5f;
+    }
+    else if (windowAspect < viewAspect)
+    {
+        viewportHeight = windowAspect / viewAspect;
+        viewportTop = (1.0f - viewportHeight) * 0.5f;
+    }
+
+    return sf::FloatRect(sf::Vector2f(viewportLeft, viewportTop), sf::Vector2f(viewportWidth, viewportHeight));
+}
+
+inline void clampViewToWorld(sf::View *view)
+{
+    sf::Vector2f size = view->getSize();
+    size.x = std::min(size.x, DEF_WIDTH);
+    size.y = std::min(size.y, DEF_HEIGHT);
+    view->setSize(size);
+
+    sf::Vector2f center = view->getCenter();
+    const float halfWidth = size.x * 0.5f;
+    const float halfHeight = size.y * 0.5f;
+
+    if (size.x >= DEF_WIDTH)
+    {
+        center.x = DEF_WIDTH * 0.5f;
+    }
+    else
+    {
+        center.x = std::clamp(center.x, halfWidth, DEF_WIDTH - halfWidth);
+    }
+
+    if (size.y >= DEF_HEIGHT)
+    {
+        center.y = DEF_HEIGHT * 0.5f;
+    }
+    else
+    {
+        center.y = std::clamp(center.y, halfHeight, DEF_HEIGHT - halfHeight);
+    }
+
+    view->setCenter(center);
+}
+
 inline void handleResize(sf::Window *window, sf::View *newView, sf::View *oldView, const sf::Event::Resized *resized)
 {
-    sf::FloatRect visibleArea({0.f, 0.f}, sf::Vector2f(resized->size));
-    newView->setSize(sf::Vector2f(visibleArea.size.x, visibleArea.size.y));
+    (void)window;
+    (void)oldView;
+    (void)resized;
 
-    // Clamp position after resize
-    sf::Vector2f center = newView->getCenter();
-    sf::Vector2f size = newView->getSize();
-    float halfWidth = size.x / 2.0f;
-    float halfHeight = size.y / 2.0f;
-    float minX = halfWidth;
-    float maxX = DEF_WIDTH - halfWidth;
-    float minY = halfHeight;
-    float maxY = DEF_HEIGHT - halfHeight;
-
-    if (center.x - halfWidth < minX)
-        center.x = minX;
-    else if (center.x + halfWidth > maxX)
-        center.x = maxX;
-    if (center.y - halfHeight < minY)
-        center.y = minY;
-    else if (center.y + halfHeight > DEF_HEIGHT)
-        center.y = maxY;
-
-    newView->setCenter(center);
+    clampViewToWorld(newView);
+    newView->setViewport(sf::FloatRect(sf::Vector2f(0.0f, 0.0f), sf::Vector2f(1.0f, 1.0f)));
 }
 
 inline void handleZoom(sf::RenderWindow *window, sf::View *newView, sf::View *oldView, float delta, float *accumulatedZoom)
@@ -60,27 +101,7 @@ inline void handleZoom(sf::RenderWindow *window, sf::View *newView, sf::View *ol
     sf::Vector2f offset = mouseWorldPosBefore - mouseWorldPosAfter;
     newView->move(offset);
 
-    // Clamp position after zoom
-    sf::Vector2f center = newView->getCenter();
-    sf::Vector2f size = newView->getSize();
-    float halfWidth = size.x / 2.0f;
-    float halfHeight = size.y / 2.0f;
-    float minX = halfWidth;
-    float maxX = DEF_WIDTH - halfWidth;
-    float minY = halfHeight;
-    float maxY = DEF_HEIGHT - halfHeight;
-
-    if (center.x - halfWidth < minX)
-        center.x = minX;
-    else if (center.x + halfWidth > maxX)
-        center.x = maxX;
-
-    if (center.y - halfHeight < minY)
-        center.y = minY;
-    else if (center.y + halfHeight > maxY)
-        center.y = maxY;
-
-    newView->setCenter(center);
+    clampViewToWorld(newView);
 }
 
 inline void handlePanMouse(sf::RenderWindow *window, sf::View *newView, sf::View *oldView, const sf::Event::MouseMoved *mouseMoved, sf::Vector2f &lastMousePos, float accumulatedZoom)
@@ -93,27 +114,7 @@ inline void handlePanMouse(sf::RenderWindow *window, sf::View *newView, sf::View
     newView->move(deltaPos);
     lastMousePos = currentMousePos;
 
-    // Clamp position to stay within world bounds
-    sf::Vector2f center = newView->getCenter();
-    sf::Vector2f size = newView->getSize();
-    float halfWidth = size.x / 2.0f;
-    float halfHeight = size.y / 2.0f;
-    float minX = halfWidth;
-    float maxX = DEF_WIDTH - halfWidth;
-    float minY = halfHeight;
-    float maxY = DEF_HEIGHT - halfHeight;
-
-    if (center.x - halfWidth < minX)
-        center.x = minX;
-    else if (center.x + halfWidth > maxX)
-        center.x = maxX;
-
-    if (center.y - halfHeight < minY)
-        center.y = minY;
-    else if (center.y + halfHeight > maxY)
-        center.y = maxY;
-
-    newView->setCenter(center);
+    clampViewToWorld(newView);
 }
 
 inline void handlePanKeyboard(sf::RenderWindow *window, sf::View *newView, sf::View *oldView)
@@ -138,25 +139,5 @@ inline void handlePanKeyboard(sf::RenderWindow *window, sf::View *newView, sf::V
 
     newView->move(movement);
 
-    // Clamp position after keyboard pan
-    sf::Vector2f center = newView->getCenter();
-    sf::Vector2f size = newView->getSize();
-    float halfWidth = size.x / 2.0f;
-    float halfHeight = size.y / 2.0f;
-    float minX = halfWidth;
-    float maxX = DEF_WIDTH - halfWidth;
-    float minY = halfHeight;
-    float maxY = DEF_HEIGHT - halfHeight;
-
-    if (center.x - halfWidth < minX)
-        center.x = minX;
-    else if (center.x + halfWidth > maxX)
-        center.x = maxX;
-
-    if (center.y - halfHeight < minY)
-        center.y = minY;
-    else if (center.y + halfHeight > maxY)
-        center.y = maxY;
-
-    newView->setCenter(center);
+    clampViewToWorld(newView);
 }
