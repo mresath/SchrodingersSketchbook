@@ -4,10 +4,10 @@
 
 The simulation evolves a complex wavefunction $\psi(x, y, t)$ on a 2D grid.
 
-It uses the time-dependent Schrodinger equation in dimensionless form:
+It uses the time-dependent Schrödinger equation:
 
 $$
-i\frac{\partial \psi}{\partial t} = -\frac{1}{2}\nabla^2\psi + V(x,y)\psi
+i\hbar\frac{\partial \psi}{\partial t} = -\frac{\hbar^2}{2m}\nabla^2\psi + V(x,y)\psi
 $$
 
 Where:
@@ -15,41 +15,46 @@ Where:
 - $\psi$ is the quantum state
 - $|\psi|^2$ is probability density
 - $V(x, y)$ is the potential field (painted barriers, walls, slits)
+- $T=-\frac{\hbar}{2m}\nabla^2$ is the kinetic operator, with laplacian $\nabla^2$.
+- $H=T+V$ is the Hamiltonian which corresponds to the total energy of the system.
+- $m$ is the particle mass
+- $\hbar$ is the reduced Planck constant
+- $i$ is the imaginary unit.
+
+The equation is discretized on a domain with characteristic units, and $\hbar$ and $m$ are tunable parameters (by default set to 1.0 in dimensionless simulations but adjustable to change the physics: higher $\hbar$ increases dispersion, while higher $m$ reduces the kinetic energy scale).
 
 ## Numerical method
 
 The update is an operator split (Strang splitting):
 
 $$
-e^{-i(T+V)\Delta t} \approx e^{-iV\Delta t/2}\,e^{-iT\Delta t}\,e^{-iV\Delta t/2}
+e^{-i(T+V)\Delta t/\hbar} \approx e^{-iV\Delta t/(2\hbar)}\,e^{-iT\Delta t/\hbar}\,e^{-iV\Delta t/(2\hbar)}
 $$
-
-with kinetic operator $T=-\frac{1}{2}\nabla^2$.
 
 For each substep, the solver does:
 
-1. Half-step potential phase: multiply by $e^{-iV\Delta t/2}$
+1. Half-step potential phase: multiply by $e^{-iV\Delta t/(2\hbar)}$
 2. Kinetic step from the Laplacian term
 3. Half-step potential phase again
 
 The potential phase is pointwise:
 
 $$
-\psi \leftarrow \psi\,e^{-iV\Delta t/2}
+\psi \leftarrow \psi\,e^{-iV\Delta t/(2\hbar)}
 $$
 
 The kinetic step uses a Crank-Nicolson form. For
 
 $$
-\frac{\partial \psi}{\partial t}=\frac{i}{2}\nabla^2\psi
+\frac{\partial \psi}{\partial t}=\frac{i\hbar}{2m}\nabla^2\psi
 $$
 
 CN gives
 
 $$
-\left(I-\frac{i\Delta t}{4}\nabla^2\right)\psi^{n+1}
+\left(I-\frac{i\hbar\Delta t}{4m}\nabla^2\right)\psi^{n+1}
 =
-\left(I+\frac{i\Delta t}{4}\nabla^2\right)\psi^n
+\left(I+\frac{i\hbar\Delta t}{4m}\nabla^2\right)\psi^n
 $$
 
 On the grid, with spacings $\Delta x, \Delta y$,
@@ -62,7 +67,7 @@ $$
 \frac{\psi_{i,j+1}-2\psi_{i,j}+\psi_{i,j-1}}{\Delta y^2}
 $$
 
-The resulting linear system is solved iteratively (Gauss-Seidel style) with a fixed iteration count (`Solver iters` in the UI).
+The solver discretizes this system and solves iteratively (Gauss-Seidel style) with a fixed iteration count (`Solver iters` in the UI).
 
 Important details:
 

@@ -265,6 +265,13 @@ void App::drawControls()
         resetWavefunction();
     }
 
+    float hbar = m_simulation.hbar();
+    if (ImGui::SliderFloat("Hbar", &hbar, 0.1f, 10.0f, "%.2f"))
+    {
+        m_simulation.setHbar(hbar);
+        resetWavefunction();
+    }
+
     ImGui::SliderFloat("Barrier", &m_barrierStrength, 1.0f, 150.0f, "%.1f");
     ImGui::SliderFloat("Brush radius", &m_brushRadius, 2.0f, 50.0f, "%.1f");
     ImGui::Checkbox("Potential overlay", &m_showPotentialOverlay);
@@ -276,6 +283,12 @@ void App::drawControls()
     packetChanged |= ImGui::SliderFloat2("Packet center", &m_packet.center.x, 0.0f, DEF_WIDTH, "%.1f");
     packetChanged |= ImGui::SliderFloat2("Packet momentum", &m_packet.momentum.x, -12.0f, 12.0f, "%.2f");
     packetChanged |= ImGui::SliderFloat("Packet sigma", &m_packet.sigma, 4.0f, 80.0f, "%.1f");
+    float mass = m_simulation.mass();
+    if (ImGui::SliderFloat("Packet mass", &mass, 0.1f, 10.0f, "%.2f"))
+    {
+        m_simulation.setMass(mass);
+        packetChanged = true;
+    }
     if (packetChanged)
     {
         resetWavefunction();

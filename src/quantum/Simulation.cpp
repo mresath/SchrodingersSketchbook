@@ -19,6 +19,8 @@ Simulation::Simulation(std::size_t width, std::size_t height, float domainWidth,
       m_dy(domainHeight / static_cast<float>(height - 1)),
       m_coordScale(48.0f),
       m_solverIterations(8),
+      m_hbar(1.0f),
+      m_mass(1.0f),
       m_renormalize(true),
       m_psi(width * height, std::complex<float>(0.0f, 0.0f)),
       m_nextPsi(width * height, std::complex<float>(0.0f, 0.0f)),
@@ -77,7 +79,7 @@ void Simulation::step(float dt, int substeps)
 
     for (int stepIndex = 0; stepIndex < substeps; ++stepIndex)
     {
-        const float halfPotentialPhase = -0.5f * dtPerSubstep;
+        const float halfPotentialPhase = -0.5f * dtPerSubstep / m_hbar;
         for (std::size_t i = 0; i < m_psi.size(); ++i)
         {
             if (m_potential[i] != 0.0f)
@@ -86,7 +88,7 @@ void Simulation::step(float dt, int substeps)
             }
         }
 
-        const std::complex<float> alpha = imag * (0.25f * dtPerSubstep);
+        const std::complex<float> alpha = imag * (0.25f * dtPerSubstep * m_hbar / (2.0f * m_mass));
         const std::complex<float> diag = std::complex<float>(1.0f, 0.0f) + alpha * (2.0f * (invDx2 + invDy2));
 
         for (std::size_t y = 1; y + 1 < m_height; ++y)
@@ -272,6 +274,26 @@ void Simulation::setSolverIterations(int iterations)
 int Simulation::solverIterations() const
 {
     return m_solverIterations;
+}
+
+void Simulation::setHbar(float hbar)
+{
+    m_hbar = std::max(0.001f, hbar);
+}
+
+float Simulation::hbar() const
+{
+    return m_hbar;
+}
+
+void Simulation::setMass(float mass)
+{
+    m_mass = std::max(0.001f, mass);
+}
+
+float Simulation::mass() const
+{
+    return m_mass;
 }
 
 float Simulation::computeNorm() const

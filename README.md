@@ -40,9 +40,9 @@ UI panel (`Sandbox`):
 - Pause/Resume and single-step
 - Reset packet and clear potential
 - Presets: center wall, double slit
-- Simulation controls: `Sim dt`, `Substeps`, `Solver iters`, `Coord scale`, renormalization toggle
+- Simulation controls: `Sim dt`, `Substeps`, `Solver iters`, `Coord scale`, `Hbar`, renormalization toggle
 - Interaction controls: barrier strength, brush radius, overlay toggle
-- Packet controls: center, momentum, sigma
+- Packet controls: center, momentum, sigma, mass
 
 ## Notes
 

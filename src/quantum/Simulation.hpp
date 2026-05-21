@@ -35,6 +35,12 @@ public:
     void setSolverIterations(int iterations);
     int solverIterations() const;
 
+    void setHbar(float hbar);
+    float hbar() const;
+
+    void setMass(float mass);
+    float mass() const;
+
     float computeNorm() const;
     float computeMaxDensity() const;
 
@@ -60,6 +66,8 @@ private:
     float m_dy;
     float m_coordScale;
     int m_solverIterations;
+    float m_hbar;
+    float m_mass;
 
     bool m_renormalize;
 
